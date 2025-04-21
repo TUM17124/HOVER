@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Card Flip Game</title>
+  <style>
+    .scene {
+      width: 200px;
+      height: 200px;
+      perspective: 1000px;
+      margin: 20px;
+      display: inline-block;
+    }
+
+    .card {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 1s;
+    }
+
+    .card:h {
+      transform: rotateY(180deg);
+    }
+
+    .front, .back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    .front {
+      background-color: blue;
+    }
+
+    .back {
+      background-color: darkred;
+      transform: rotateY(180deg);
+      opacity: 0;
+      transition: opacity 0.3s ease 0.3s;
+    }
+
+    .back-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    .card.flip .back {
+      opacity: 1;
+    }
+
+    .pulse {
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 0.6; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    #micButton {
+      padding: 10px 20px;
+      font-size: 18px;
+      margin: 20px;
+      cursor: pointer;
+    }
+
+    #heardText {
+      font-size: 18px;
+      font-weight: bold;
+      color: #444;
+      margin-left: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <button id="micButton">🎤 Say 'left', 'middle', or 'right'</button>
+  <p id="heardText">🎧 Heard: <span id="heardOutput">Nothing yet</span></p>
+  <div id="cardContainer"></div>
+
+  <script>
+    const cardValues = ["BACK", "BACK", "LOOSE"];
+    const container = document.getElementById("cardContainer");
+    const micButton = document.getElementById("micButton");
+    const heardOutput = document.getElementById("heardOutput");
+    let scenes = [];
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+
+    function createCards() {
+      container.innerHTML = "";
+      const shuffled = shuffle([...cardValues]);
+      scenes = [];
+
+      shuffled.forEach(value => {
+        const scene = document.createElement("div");
+        scene.className = "scene";
+
+        const card = document.createElement("div");
+        card.className = "card";
+
+        const front = document.createElement("div");
+        front.className = "front";
+        front.textContent = "FRONT";
+
+        const back = document.createElement("div");
+        back.className = "back";
+
+        const backContent = document.createElement("div");
+        backContent.className = "back-content";
+        backContent.textContent = value === "LOOSE" ? "YOU LOSE 💥" : value;
+
+        card.appendChild(front);
+        card.appendChild(back);
+        scene.appendChild(card);
+        container.appendChild(scene);
+        back.appendChild(backContent);
+
+        scene.dataset.value = value;
+        scenes.push(scene);
+      });
+    }
+
+    function flipCard(index) {
+      const scene = scenes[index];
+      if (!scene) return;
+
+      const card = scene.querySelector(".card");
+      const backContent = scene.querySelector(".back-content");
+      const value = scene.dataset.value;
+
+      card.classList.add("flip");
+
+      if (value === "LOOSE") {
+        backContent.classList.add("pulse");
+        setTimeout(() => {
+          window.location.href = "lose.html";
+        }, 3000);
+      } else {
+        setTimeout(() => {
+          location.reload();
+        }, 1500);
+      }
+    }
+
+    function startListening() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      if (!SpeechRecognition) {
+        alert("Speech recognition not supported in this browser.");
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = "en-US";
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      recognition.start();
+      micButton.textContent = "🎙 Listening...";
+      heardOutput.textContent = "Listening...";
+
+      recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript.toLowerCase();
+        heardOutput.textContent = transcript;
+
+        if (transcript.includes("left")) {
+          flipCard(0);
+        } else if (transcript.includes("middle")) {
+          flipCard(1);
+        } else if (transcript.includes("right")) {
+          flipCard(2);
+        } else {
+          alert("Say 'left', 'middle', or 'right'");
+        }
+
+        micButton.textContent = "🎤 Say 'left', 'middle', or 'right'";
+      };
+
+      recognition.onerror = function(event) {
+        console.error("Speech recognition error:", event.error);
+        heardOutput.textContent = "Error: " + event.error;
+        micButton.textContent = "🎤 Try Again";
+      };
+
+      recognition.onend = function() {
+        micButton.textContent = "🎤 Say 'left', 'middle', or 'right'";
+      };
+    }
+
+    micButton.addEventListener("click", startListening);
+    createCards();
+  </script>
+</body>
+</html>
