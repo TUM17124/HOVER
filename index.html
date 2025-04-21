@@ -21,7 +21,7 @@
       transition: transform 1s;
     }
 
-    .card:h {
+    .card.flip {
       transform: rotateY(180deg);
     }
 
@@ -46,7 +46,11 @@
       background-color: darkred;
       transform: rotateY(180deg);
       opacity: 0;
-      transition: opacity 0.3s ease 0.3s;
+      transition: opacity 0.3s ease 0.5s;
+    }
+
+    .card.flip .back {
+      opacity: 1;
     }
 
     .back-content {
@@ -55,10 +59,6 @@
       justify-content: center;
       width: 100%;
       height: 100%;
-    }
-
-    .card.flip .back {
-      opacity: 1;
     }
 
     .pulse {
@@ -112,7 +112,7 @@
       const shuffled = shuffle([...cardValues]);
       scenes = [];
 
-      shuffled.forEach(value => {
+      shuffled.forEach((value, index) => {
         const scene = document.createElement("div");
         scene.className = "scene";
 
@@ -130,11 +130,11 @@
         backContent.className = "back-content";
         backContent.textContent = value === "LOOSE" ? "YOU LOSE 💥" : value;
 
+        back.appendChild(backContent);
         card.appendChild(front);
         card.appendChild(back);
         scene.appendChild(card);
         container.appendChild(scene);
-        back.appendChild(backContent);
 
         scene.dataset.value = value;
         scenes.push(scene);
@@ -155,7 +155,7 @@
         backContent.classList.add("pulse");
         setTimeout(() => {
           window.location.href = "lose.html";
-        }, 3000);
+        },);
       } else {
         setTimeout(() => {
           location.reload();
@@ -186,7 +186,7 @@
 
         if (transcript.includes("left")) {
           flipCard(0);
-        } else if (transcript.includes("middle")) {
+        } else if (transcript.includes("middle") || transcript.includes("center")) {
           flipCard(1);
         } else if (transcript.includes("right")) {
           flipCard(2);
